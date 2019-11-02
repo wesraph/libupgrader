@@ -89,8 +89,21 @@ async function main() {
   averageBitrate = averageBitrate / totCum / 1000
   console.log("Average bitrate of library: " + averageBitrate)
 
+  library = library.map((el) => {
+    if(el.bitrate === undefined) {
+      el.bitrate = 0
+    }
+    return el
+  })
+
   // Smallest bitrate first
-  library.sort((a,b) => { return a.bitrate > b.bitrate })
+  library.sort((a,b) => {
+    if(a.bitrate === undefined) {
+      return -1
+    }
+    return a.bitrate > b.bitrate
+  })
+
 
   for(var item in library) {
     var orSong = library[item].url
@@ -123,6 +136,7 @@ async function main() {
 
     var filteredItems = []
     var minSpeed = 100
+    // TODO: Replace with filter
     for(let sitem in sortedItems) {
       let song  = sortedItems[sitem]
       if( song.speed >= minSpeed &&
@@ -151,12 +165,14 @@ async function main() {
       action = await question(
         "Which song to download ? (1 - "
         + toDisplay +
-        " to choose, 0 to skip, n for next, p for previous, q to quit): "
+        " to choose, 0 to skip, n for next, p for previous, r rewrite request, q to quit): "
       )
       if(action === "n") {
         i++
       } else if(action === "p") {
         i--
+      } else if(action === "r") {
+        request = await question("New request: ")
       }
 
     } while(!(action <= toDisplay && action >= 0 || action === "q") &&
@@ -188,6 +204,15 @@ async function downloadReplacer(originalPath, replacer, sclient) {
 
   let outputFilename = replacer.file.split('\\')
   outputFilename = outputFilename[outputFilename.length - 1]
+  let extensionInput = originalFilename.match(regIsSongFile)
+
+  let extensionOutput = outputFilename.match(regIsSongFile)
+  if(extensionOutput === null) {
+    console.log("Cannot find extension of downloading file: "+ outputFilename)
+    return
+  }
+
+  let outputFilenameInLibrary = originalFilename.replace(extensionInput, extensionOutput)
 
   downloadingCount++
   try{
@@ -215,7 +240,7 @@ async function downloadReplacer(originalPath, replacer, sclient) {
   let destFolder = originalPath.split("/").slice(0, -1).join("/")
   fs.copyFileSync(
     "downloads/" + outputFilename,
-    destFolder + "/" + outputFilename
+    destFolder + "/" + outputFilenameInLibrary
   )
 
   fs.unlinkSync("downloads/" + outputFilename)
