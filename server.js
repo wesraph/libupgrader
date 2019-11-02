@@ -96,16 +96,17 @@ async function main() {
     return el
   })
 
+
   // Smallest bitrate first
-  library.sort((a,b) => {
-    if(a.bitrate === undefined) {
-      return -1
+  library = library.sort((a,b) => {
+    if(a.bitrate > b.bitrate) {
+      return 1
     }
-    return a.bitrate > b.bitrate
+    return -1
   })
 
-
-  for(var item in library) {
+  let libraryLength = library.length
+  for(var item  = 0; item < libraryLength; item++) {
     var orSong = library[item].url
     var ret = orSong.match(regSong)
     if(!ret || ret.length != 4) {
