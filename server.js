@@ -4,14 +4,27 @@ const recdir = require('recursive-readdir');
 const readline = require('readline')
 const fs = require('fs')
 
-const libraryPath = './Techno1'
+if(process.argv.length < 3) {
+  console.log("Usage: node server.js pathToLibrary")
+  process.exit(1)
+}
+
+var libraryPath = process.argv[2]
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
 var downloadingCount = 0
 var creds = JSON.parse(fs.readFileSync("creds.json").toString())
+try {
+  fs.mkdirSync("./downloads")
 
+} catch(err) {
+  if(err.code != 'EEXIST') {
+    console.log(err)
+    process.exit(1)
+  }
+}
 async function main() {
   console.log("Login to soulseek")
   var sclient = await new Promise(function(resolve, reject){
@@ -40,6 +53,8 @@ async function main() {
     });
   })
 
+  libraryFiles = libraryFiles.filter(file => regIsSongFile.test(file))
+
   console.log("Getting metadata")
   var library = []
   for(var i in libraryFiles) {
@@ -61,16 +76,24 @@ async function main() {
     } catch(err){
       console.log(err)
     }
-
   }
+
+  var totCum = 0
+  let averageBitrate = library.reduce((accumulator, currentValue) =>{
+    if(currentValue.bitrate !== undefined){
+      totCum++
+      return currentValue.bitrate + accumulator
+    }
+    return accumulator
+  } , 0)
+  averageBitrate = averageBitrate / totCum / 1000
+  console.log("Average bitrate of library: " + averageBitrate)
 
   // Smallest bitrate first
   library.sort((a,b) => { return a.bitrate > b.bitrate })
-  console.log(library[0])
 
   for(var item in library) {
     var orSong = library[item].url
-    console.log("Treating " + orSong)
     var ret = orSong.match(regSong)
     if(!ret || ret.length != 4) {
       continue
@@ -121,11 +144,14 @@ async function main() {
     let toDisplay = 3
     let action
     do {
-    console.log(filteredItems.slice((i - 1) * toDisplay, i * toDisplay - 1))
+      console.log("Original name: " + orSong)
+      console.log("Original bitrate: " + Math.round(library[item].bitrate / 1000))
+
+      console.log(filteredItems.slice((i - 1) * toDisplay, i * toDisplay - 1))
       action = await question(
         "Which song to download ? (1 - "
         + toDisplay +
-        " to choose, 0 to skip, n for next, p for previous)"
+        " to choose, 0 to skip, n for next, p for previous, q to quit): "
       )
       if(action === "n") {
         i++
@@ -133,13 +159,23 @@ async function main() {
         i--
       }
 
-    } while(!(action <= toDisplay && action >= 0) &&
+    } while(!(action <= toDisplay && action >= 0 || action === "q") &&
       (i * toDisplay < filteredItems.length))
 
     // If it's a download action
     if(action <= 3 && action >= 1) {
       action = action - 1
       downloadReplacer(orSong, filteredItems[action + toDisplay * (i -1)], sclient)
+    } else if(action === "q"){
+      console.log("Quitting")
+      setInterval(() => {
+        if(downloadingCount == 0) {
+          console.log("All downloads are done, quitting")
+          process.exit(0)
+        }
+        console.log("Remaining downloads: " + downloadingCount)
+      }, 2000)
+      return
     }
 
   }
@@ -177,10 +213,12 @@ async function downloadReplacer(originalPath, replacer, sclient) {
   fs.unlinkSync(originalPath)
 
   let destFolder = originalPath.split("/").slice(0, -1).join("/")
-  fs.renameSync(
+  fs.copyFileSync(
     "downloads/" + outputFilename,
     destFolder + "/" + outputFilename
   )
+
+  fs.unlinkSync("downloads/" + outputFilename)
 
   console.log("Done downloading " + outputFilename)
   console.log("Still downloading: " + downloadingCount)
@@ -209,6 +247,7 @@ function search(sclient, request) {
 }
 main()
 
+var regIsSongFile = /\.(mp3|flac|wav)$/
 var regSong = /^(.*?)-(.*?)\.(mp3|flac|wav)/
 var regArtist = /^.*\//g
 var regTitle = /\(.*?\)|\[.*?\]/g
