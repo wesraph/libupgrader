@@ -183,18 +183,20 @@ async function main() {
       action = action - 1
       downloadReplacer(orSong, filteredItems[action + toDisplay * (i -1)], sclient)
     } else if(action === "q"){
-      console.log("Quitting")
-      setInterval(() => {
-        if(downloadingCount == 0) {
-          console.log("All downloads are done, quitting")
-          process.exit(0)
-        }
-        console.log("Remaining downloads: " + downloadingCount)
-      }, 2000)
-      return
+      console.log("Quitting search")
+      break
     }
 
   }
+
+  setInterval(() => {
+    if(downloadingCount == 0) {
+      console.log("All downloads are done, quitting")
+      process.exit(0)
+    }
+    console.log("Remaining downloads: " + downloadingCount)
+  }, 2000)
+  return
 
 }
 
