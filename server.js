@@ -153,7 +153,15 @@ async function main() {
     let action
     do {
       console.log("Original name: " + orSong)
-      console.log("Original bitrate: " + Math.round(library[item].bitrate / 1000))
+      console.log("Original bitrate: " +
+        getColorGoodBad(
+          Math.round(library[item].bitrate / 1000),
+          Math.round(library[item].bitrate / 1000),
+          128,
+          256,
+          320
+        )
+      )
 
       if(results.length > 0 && (i - 1) * toDisplay < results.length) {
         console.log(
@@ -279,7 +287,14 @@ async function search(request, initialSong, sclient){
     return []
   }
 
-  console.log("Results: " + colors.green(retsearch.length))
+  console.log("Results: " +
+    getColorGoodBad(
+      retsearch.length,
+      retsearch.length,
+      0,
+      5
+    )
+  )
 
   var sortedItems = retsearch.sort(function(a,b) {
     if(a.bitrate < b.bitrate) {
@@ -302,9 +317,24 @@ async function search(request, initialSong, sclient){
       filteredItems.push(song)
     }
   }
-  console.log("Filtered results: " + filteredItems.length)
+  console.log("Filtered results: " +
+    getColorGoodBad(
+      filteredItems.length,
+      filteredItems.length,
+      0,
+      5
+    ))
 
   return filteredItems
+}
+
+function getColorGoodBad(value, text, min, middle) {
+  if(value <= min) {
+    return colors.red(text)
+  } else if(value > min && value <= middle) {
+    return colors.blue(text)
+  }
+  return colors.green(text)
 }
 
 async function searchOnSoulseek(sclient, request) {
