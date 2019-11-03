@@ -13,6 +13,7 @@
     "eslint": "^6.1.0"
   },
   "dependencies": {
+    "colors": "^1.4.0",
     "music-metadata": "^4.3.0",
     "recursive-readdir": "^2.2.2",
     "slsk-client": "^1.1.0"
