@@ -1,6 +1,6 @@
 # LibUpgrader
 LibUpgrader is a semi-automatic tool to search on Soulseek a better quality version of your songs
-https://asciinema.org/a/EqEfE4tnFVlpvVfM6GGLPkKpQ
+[![asciicast](https://asciinema.org/a/280815.svg)](https://asciinema.org/a/280815)
 
 # Installation
 ```
